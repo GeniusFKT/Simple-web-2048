@@ -1,0 +1,25 @@
+canvas
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding-top: 10px; 
+    padding-bottom: 10px;
+    width: 98%;
+    height: 98%;
+}
+
+span
+{
+    font-size: 100px;
+    color: #2799aa;
+}
+
+#numbers
+{
+    position: absolute;
+    width: 98%;
+    height: 98%;
+    top: 0;
+    left: 0;
+}
