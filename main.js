@@ -70,8 +70,10 @@ class NumberGrids
         this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
         this.text_x_offset = grid_size / 2;
         this.text_y_offset = grid_size / 2 + 10;
+        this.two_ratio = 0.8;
     }
 
+    // draw current status
     draw()
     {
         for (let i = 0; i < 4; i++)
@@ -98,6 +100,62 @@ class NumberGrids
                     ctx.textAlign = "center";
                     ctx.fillText(String(this.numbers[i][j]), width / 2 - height / 2 + j * (gap + grid_size) + gap + this.text_x_offset, i * (gap + grid_size) + gap + this.text_y_offset);
                 }
+    }
+
+    // check game status
+    isGameOver()
+    {
+        // check zero
+        if (this.numbers.some(ele => ele.includes(0)))
+            return false;
+
+        // check adjacent values
+        for (let i = 0; i < 4; ++i)
+            for (let j = 0; j < 4; ++j)
+            {
+                // check columns
+                if (i < 3)
+                    if (this.numbers[i][j] === this.numbers[i + 1][j])
+                        return false;
+                
+                // check rows
+                if (j < 3)
+                    if (this.numbers[i][j] === this.numbers[i][j + 1])
+                        return false;
+            }
+
+        return true;
+    }
+
+    generateRandomNumber()
+    {
+        let indices = [];
+        for (let i = 0; i < 4; ++i)
+            for (let j = 0; j < 4; ++j)
+            {
+                if (this.numbers[i][j] === 0)
+                    indices.push([i, j]); 
+            }
+
+        let index = indices[Math.floor(helper.random_minmax(0, indices.length))];
+
+        if (helper.random_minmax(0, 1) < this.two_ratio)
+            this.numbers[index[0]][index[1]] = 2;
+        else
+            this.numbers[index[0]][index[1]] = 4;
+    }
+
+    popOut()
+    {
+        
+    }
+}
+
+class helper
+{
+    static random_minmax(min, max)
+    {
+        return Math.random() * (max - min) + min;
     }
 }
 
