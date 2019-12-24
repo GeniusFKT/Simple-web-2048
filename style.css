@@ -5,8 +5,6 @@ canvas
     left: 0;
     padding-top: 10px; 
     padding-bottom: 10px;
-    width: 98%;
-    height: 98%;
 }
 
 span
@@ -18,8 +16,16 @@ span
 #numbers
 {
     position: absolute;
-    width: 98%;
-    height: 98%;
+    width: 808px;
+    height: 808px;
     top: 0;
     left: 0;
+    padding-left: 439.5px;
+    padding-top: 10px;
 }
+
+/* #number
+{
+    width: 189.5px;
+    height: 189.5px;
+} */

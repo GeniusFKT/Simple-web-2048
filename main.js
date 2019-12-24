@@ -2,8 +2,10 @@
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
-const width = canvas.width;
-const height = canvas.height;
+
+
+const width = canvas.width = window.innerWidth - 20;
+const height = canvas.height = window.innerHeight - 20;
 
 class FilletRectangle
 {
@@ -62,9 +64,12 @@ class NumberGrids
 {
     constructor()
     {
-        this.numbers = [[2, 0, 0, 0], [0, 4, 0, 0], [0, 0, 8, 0], [0, 0, 0, 0]];
+        this.numbers = [[2, 4, 16, 8], [128, 4, 2048, 256], [2, 4, 8, 2], [2, 2, 256, 2]];
         this.num2color = new Map([[2, "rgb(255, 222, 173)"], [4, "rgb(255, 218, 185)"], [8, "rgb(238, 220, 130)"], [16, "rgb(205, 198, 115)"], [32, "rgb(255, 193, 37)"], [64, "rgb(205, 155, 29)"], [128, "rgb(139, 117, 0)"], [256, "rgb(210, 105, 30)"], [512, "rgb(160, 82, 45)"], [1024, "rgb(139, 69, 19)"], [2048, "rgb(165, 42, 42)"]]);
-        this.text = document.getElementById("numbers");
+        this.num2font = new Map([[1, "normal normal bold 150px arial"], [2, "normal normal bold 120px arial"], [3, "normal normal bold 90px arial"], [4, "normal normal bold 70px arial"]]);
+        this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
+        this.text_x_offset = grid_size / 2;
+        this.text_y_offset = grid_size / 2 + 10;
     }
 
     draw()
@@ -75,17 +80,23 @@ class NumberGrids
                     continue;
                 else
                 {
+                    // draw grids' color
                     let color = this.num2color.get(this.numbers[i][j]);
                     if (color === undefined)
                         color = this.num2color.get(2048);
                     let rec = new FilletRectangle(width / 2 - height / 2 + j * (gap + grid_size) + gap, i * (gap + grid_size) + gap, grid_size, grid_size, 5, color);
                     rec.draw();
-                    let newContainer = document.createElement("div");
-                    let newContent = document.createElement("span"); 
-                    newContent.setAttribute("padding-left", String(width / 2 - height / 2 + j * (gap + grid_size) + gap) + "px");
-                    newContent.setAttribute("padding-top", String(i * (gap + grid_size) + gap) + "px");
-                    newContent.textContent = String(this.numbers[i][j]);
-                    this.text.appendChild(newContent);
+
+                    // draw numbers (white)
+                    let digits = Math.ceil(Math.log10(this.numbers[i][j]));
+                    ctx.fillStyle = "rgb(255, 255, 255)";
+                    ctx.font = this.num2font.get(digits);
+                    this.text_y_offset = grid_size / 2 + this.num2y_offset.get(digits);
+                    // set baseline
+                    ctx.textBaseline = "middle";
+                    // align based on x values in fillText
+                    ctx.textAlign = "center";
+                    ctx.fillText(String(this.numbers[i][j]), width / 2 - height / 2 + j * (gap + grid_size) + gap + this.text_x_offset, i * (gap + grid_size) + gap + this.text_y_offset);
                 }
     }
 }
