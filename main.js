@@ -64,13 +64,14 @@ class NumberGrids
 {
     constructor()
     {
-        this.numbers = [[2, 4, 16, 8], [128, 4, 2048, 256], [2, 4, 8, 2], [2, 2, 256, 2]];
+        this.numbers = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
         this.num2color = new Map([[2, "rgb(255, 222, 173)"], [4, "rgb(255, 218, 185)"], [8, "rgb(238, 220, 130)"], [16, "rgb(205, 198, 115)"], [32, "rgb(255, 193, 37)"], [64, "rgb(205, 155, 29)"], [128, "rgb(139, 117, 0)"], [256, "rgb(210, 105, 30)"], [512, "rgb(160, 82, 45)"], [1024, "rgb(139, 69, 19)"], [2048, "rgb(165, 42, 42)"]]);
         this.num2font = new Map([[1, "normal normal bold 150px arial"], [2, "normal normal bold 120px arial"], [3, "normal normal bold 90px arial"], [4, "normal normal bold 70px arial"]]);
         this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
         this.text_x_offset = grid_size / 2;
         this.text_y_offset = grid_size / 2 + 10;
         this.two_ratio = 0.8;
+        this.pop_out_velocity = 8;
     }
 
     // draw current status
@@ -90,16 +91,21 @@ class NumberGrids
                     rec.draw();
 
                     // draw numbers (white)
-                    let digits = Math.ceil(Math.log10(this.numbers[i][j]));
-                    ctx.fillStyle = "rgb(255, 255, 255)";
-                    ctx.font = this.num2font.get(digits);
-                    this.text_y_offset = grid_size / 2 + this.num2y_offset.get(digits);
-                    // set baseline
-                    ctx.textBaseline = "middle";
-                    // align based on x values in fillText
-                    ctx.textAlign = "center";
-                    ctx.fillText(String(this.numbers[i][j]), width / 2 - height / 2 + j * (gap + grid_size) + gap + this.text_x_offset, i * (gap + grid_size) + gap + this.text_y_offset);
+                    this.draw_number([i, j]);
                 }
+    }
+
+    draw_number(index)
+    {
+        let digits = Math.ceil(Math.log10(this.numbers[index[0]][index[1]]));
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        ctx.font = this.num2font.get(digits);
+        this.text_y_offset = grid_size / 2 + this.num2y_offset.get(digits);
+        // set baseline
+        ctx.textBaseline = "middle";
+        // align based on x values in fillText
+        ctx.textAlign = "center";
+        ctx.fillText(String(this.numbers[index[0]][index[1]]), width / 2 - height / 2 + index[1] * (gap + grid_size) + gap + this.text_x_offset, index[0] * (gap + grid_size) + gap + this.text_y_offset);
     }
 
     // check game status
@@ -137,21 +143,40 @@ class NumberGrids
                     indices.push([i, j]); 
             }
 
-        let index = indices[Math.floor(helper.random_minmax(0, indices.length))];
+        let index = indices[Math.floor(Helper.random_minmax(0, indices.length))];
 
-        if (helper.random_minmax(0, 1) < this.two_ratio)
+        if (Helper.random_minmax(0, 1) < this.two_ratio)
             this.numbers[index[0]][index[1]] = 2;
         else
             this.numbers[index[0]][index[1]] = 4;
+
+        this.popOut(index);
     }
 
-    popOut()
+    popOut(index)
     {
-        
+        // get grid center coordinate
+        let x_offset = width / 2 - height / 2 + index[1] * (gap + grid_size) + gap + grid_size / 2;
+        let y_offset = index[0] * (gap + grid_size) + gap + grid_size / 2;
+        let y_final = index[0] * (gap + grid_size) + gap;
+
+        let animate = new AnimatePopOut(this.pop_out_velocity, x_offset, y_offset, y_final, this.numbers[index[0]][index[1]], this.num2font.get(1), this.num2y_offset.get(1), this.num2color.get(this.numbers[index[0]][index[1]]));
+
+        // popout animation loop
+        function loop()
+        {
+            animate.update();
+            animate.draw();
+
+            if (animate.y_offset >= animate.y_final)
+                window.requestAnimationFrame(loop);
+        }
+
+        loop();
     }
 }
 
-class helper
+class Helper
 {
     static random_minmax(min, max)
     {
@@ -159,5 +184,55 @@ class helper
     }
 }
 
+class AnimatePopOut
+{
+    constructor(velocity, x_offset, y_offset, y_final, number, font, text_y_offset, color)
+    {
+        this.velocity = velocity;
+        this.x_offset = x_offset;
+        this.y_offset = y_offset;
+        this.y_final = y_final;
+        this.number = number;
+        this.font = font;
+        this.text_y_offset = text_y_offset;
+        this.color = color;
+        this.x_offset_const = x_offset;
+        this.y_offset_const = y_offset;
+    }
+
+    draw()
+    {
+        // draw rec
+        let rec_size = grid_size - 2 * (this.y_offset - this.y_final);
+        let rec_radius = 5 / grid_size * rec_size;
+        let rec = new FilletRectangle(this.x_offset, this.y_offset, rec_size, rec_size, rec_radius, this.color);
+        rec.draw();
+        
+        // draw number with corresponding size
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        let font_size = 150;
+        font_size = Math.floor(font_size / grid_size * rec_size);
+        let new_font = this.font.substr(0, 19) + String(font_size) + this.font.substr(22, 8);
+        ctx.font = new_font;
+        console.log(new_font);
+        // set baseline
+        ctx.textBaseline = "middle";
+        // align based on x values in fillText
+        ctx.textAlign = "center";
+        ctx.fillText(String(this.number), this.x_offset_const, this.y_offset_const + this.text_y_offset);
+    }
+
+    update()
+    {
+        this.y_offset -= this.velocity;
+        this.x_offset -= this.velocity;
+    }
+}
+
+
+
+
 let NG = new NumberGrids();
-NG.draw();
+
+document.addEventListener("keypress", function (e) {NG.generateRandomNumber();});
+//document.onkeypress = NG.generateRandomNumber;
