@@ -71,7 +71,8 @@ class NumberGrids
         this.text_x_offset = grid_size / 2;
         this.text_y_offset = grid_size / 2 + 10;
         this.two_ratio = 0.8;
-        this.pop_out_velocity = 8;
+        this.pop_out_velocity = 10;
+        this.move_velocity = 10;
     }
 
     // draw current status
@@ -133,6 +134,7 @@ class NumberGrids
         return true;
     }
 
+    // generate random number
     generateRandomNumber()
     {
         let indices = [];
@@ -153,6 +155,7 @@ class NumberGrids
         this.popOut(index);
     }
 
+    // new number pop out animation
     popOut(index)
     {
         // get grid center coordinate
@@ -163,16 +166,213 @@ class NumberGrids
         let animate = new AnimatePopOut(this.pop_out_velocity, x_offset, y_offset, y_final, this.numbers[index[0]][index[1]], this.num2font.get(1), this.num2y_offset.get(1), this.num2color.get(this.numbers[index[0]][index[1]]));
 
         // popout animation loop
-        function loop()
+        let timer;
+        let loop = function()
         {
             animate.update();
             animate.draw();
 
             if (animate.y_offset >= animate.y_final)
-                window.requestAnimationFrame(loop);
-        }
+                timer = window.requestAnimationFrame(loop);
+            else
+                cancelAnimationFrame(timer);
+        };
 
         loop();
+    }
+
+    // return the index of all grids which is moveable under specific direction
+    moveable(direction)
+    {
+        let indices = [];
+
+        switch (direction) 
+        {
+            // up
+            case "u":
+                for (let j = 0; j < 4; ++j)
+                {
+                    let flag = false;
+                    for (let i = 0; i < 4; ++i)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                            indices.push([i, j]);
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            // down
+            case "d":
+                for (let j = 0; j < 4; ++j)
+                {
+                    let flag = false;
+                    for (let i = 3; i >= 0; ++i)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                            indices.push([i, j]);
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            // left
+            case "l":
+                for (let i = 0; i < 4; ++i)
+                {
+                    let flag = false;
+                    for (let j = 0; j < 4; ++j)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                            indices.push([i, j]);
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            // right
+            case "r":
+                for (let i = 0; i < 4; ++i)
+                {
+                    let flag = false;
+                    for (let j = 3; j >= 0; ++j)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                            indices.push([i, j]);
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            default:
+                throw "Invalid direction!";
+        }
+
+        return indices;
+    }
+
+    // update once according to given direction
+    update(direction)
+    {
+        switch (direction) 
+        {
+            // up
+            case "u":
+                for (let j = 0; j < 4; ++j)
+                {
+                    let flag = false;
+                    for (let i = 0; i < 4; ++i)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                        {
+                            this.numbers[i - 1][j] = this.numbers[i][j];
+                            this.numbers[i][j] = 0;
+                        }
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            // down
+            case "d":
+                for (let j = 0; j < 4; ++j)
+                {
+                    let flag = false;
+                    for (let i = 3; i >= 0; ++i)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                        {
+                            this.numbers[i + 1][j] = this.numbers[i][j];
+                            this.numbers[i][j] = 0;
+                        }
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            // left
+            case "l":
+                for (let i = 0; i < 4; ++i)
+                {
+                    let flag = false;
+                    for (let j = 0; j < 4; ++j)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                        {
+                            this.numbers[i][j - 1] = this.numbers[i][j];
+                            this.numbers[i][j] = 0;
+                        }
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            // right
+            case "r":
+                for (let i = 0; i < 4; ++i)
+                {
+                    let flag = false;
+                    for (let j = 3; j >= 0; ++j)
+                    {
+                        if (flag === true && this.numbers[i][j] !== 0)
+                        {
+                            this.numbers[i][j + 1] = this.numbers[i][j];
+                            this.numbers[i][j] = 0;
+                        }
+                        if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            default:
+                throw "Invalid direction!";
+        }
+    }
+
+    move_up()
+    {
+        // try three times
+        for (let _ = 0; _ < 3; ++_)
+            this.move_up_once();
+    }
+
+    move_up_once()
+    {
+        let indices = this.moveable("u");
+        let animates = [];
+        for (let i = 0; i < indices.length; ++i)
+        {
+            let number = this.numbers[indices[i][0]][indices[i][1]];
+            let digit = Math.ceil(Math.log10(number));
+            let color = this.num2color.get(number);
+            if (color === undefined)
+                color = this.num2color.get(2048);
+            let font = this.num2font.get(digit);
+            let text_y_offset = this.num2y_offset.get(digit);
+            let animate = new AnimateMove(indices[i], "u", this.move_velocity, number, font, color, text_y_offset);
+
+            animates.push(animate);
+        }
+
+        // nothing to update
+        if (animates.length === 0)
+            return;
+
+        let loop = function()
+        {
+            for (let i = 0; i < animates.length; ++i)
+            {
+                animates[i].update();
+                animates[i].draw();
+            }
+
+            if (animates[0].y_offset >= indices[0][0] * (gap + grid_size) - grid_size)
+                window.requestAnimationFrame(loop);
+        };
+
+        loop();
+
+        this.update("u");
     }
 }
 
@@ -225,14 +425,85 @@ class AnimatePopOut
     update()
     {
         this.y_offset -= this.velocity;
+        if (this.y_offset < this.y_final)
+        {
+            this.y_offset = this.y_final;
+            this.x_offset = this.x_offset_const - grid_size / 2;
+            return;
+        }
         this.x_offset -= this.velocity;
     }
 }
 
+class AnimateMove
+{
+    constructor(index, direction, velocity, number, font, color, text_y_offset)
+    {
+        this.index = index;
+        this.direction = direction;
+        this.velocity = velocity;
+        this.number = number;
+        this.font = font;
+        this.color = color;
+        this.text_y_offset = text_y_offset;
+        // origin grid offset (top left, absolute)
+        this.x_offset = width / 2 - height / 2 + index[1] * (gap + grid_size) + gap;
+        this.y_offset = index[0] * (gap + grid_size) + gap;
+    }
 
+    draw()
+    {
+        // draw rectangle
+        let rec = new FilletRectangle(this.x_offset, this.y_offset, grid_size, grid_size, 5, this.color);
+        rec.draw();
+
+        // draw text
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        ctx.font = this.font;
+
+        // set baseline
+        ctx.textBaseline = "middle";
+        // align based on x values in fillText
+        ctx.textAlign = "center";
+        ctx.fillText(String(this.number), this.x_offset + grid_size / 2, this.y_offset + grid_size / 2 + this.text_y_offset);
+    }
+
+    update()
+    {
+        switch (this.direction) 
+        {
+            case "u":
+                this.y_offset -= this.velocity;
+                break;
+
+            case "d":
+                this.y_offset += this.velocity;
+                break;
+
+            case "l":
+                this.x_offset -= this.velocity;
+                break;
+
+            case "r":
+                this.x_offset += this.velocity;
+                break;
+
+            default:
+                throw "Invalid direction!";
+        }
+    }
+}
 
 
 let NG = new NumberGrids();
 
-document.addEventListener("keypress", function (e) {NG.generateRandomNumber();});
+document.addEventListener("keypress", function (e) 
+{
+    // detect 'g'
+    if (e.keyCode === 103)
+        NG.generateRandomNumber();
+    // detect 'w'
+    if (e.keyCode === 119)
+        NG.move_up_once();
+});
 //document.onkeypress = NG.generateRandomNumber;
