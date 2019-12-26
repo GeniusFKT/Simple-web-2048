@@ -37,7 +37,7 @@ class FilletRectangle
     }
 }
 
-
+// draw grids and background
 let background = new FilletRectangle(width / 2 - height / 2, 0, height, height, 10, 'rgb(100, 100, 100)');
 background.draw();
 
@@ -81,6 +81,27 @@ class NumberGrids
         for (let i = 0; i < 4; i++)
             for (let j = 0; j < 4; j++)
                 if (this.numbers[i][j] === 0)
+                    continue;
+                else
+                {
+                    // draw grids' color
+                    let color = this.num2color.get(this.numbers[i][j]);
+                    if (color === undefined)
+                        color = this.num2color.get(2048);
+                    let rec = new FilletRectangle(width / 2 - height / 2 + j * (gap + grid_size) + gap, i * (gap + grid_size) + gap, grid_size, grid_size, 5, color);
+                    rec.draw();
+
+                    // draw numbers (white)
+                    this.draw_number([i, j]);
+                }
+    }
+
+    // draw current status with a mask (number under mask will not be drawn)
+    draw_with_mask(mask)
+    {
+        for (let i = 0; i < 4; i++)
+            for (let j = 0; j < 4; j++)
+                if (mask[i][j] === 0 || this.numbers[i][j] === 0)
                     continue;
                 else
                 {
@@ -175,7 +196,7 @@ class NumberGrids
             if (animate.y_offset >= animate.y_final)
                 timer = window.requestAnimationFrame(loop);
             else
-                cancelAnimationFrame(timer);
+                window.cancelAnimationFrame(timer);
         };
 
         loop();
@@ -339,6 +360,16 @@ class NumberGrids
     move_up_once()
     {
         let indices = this.moveable("u");
+        // get mask
+        let mask = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
+        for (let i = 0; i < indices.length; ++i)
+            mask[indices[i][0]][indices[i][1]] = 0;
+
+        for (let i = 0; i < 4; ++i)
+            for (let j = 0; j < 4; ++j)
+                if (this.numbers[i][j] === 0)
+                    mask[i][j] = 0;
+
         let animates = [];
         for (let i = 0; i < indices.length; ++i)
         {
@@ -358,6 +389,10 @@ class NumberGrids
         if (animates.length === 0)
             return;
 
+        this.draw_with_mask(mask);
+        
+        let timer;
+
         let loop = function()
         {
             for (let i = 0; i < animates.length; ++i)
@@ -367,11 +402,14 @@ class NumberGrids
             }
 
             if (animates[0].y_offset >= indices[0][0] * (gap + grid_size) - grid_size)
-                window.requestAnimationFrame(loop);
+                timer = window.requestAnimationFrame(loop);
+            else
+                window.cancelAnimationFrame(timer);
         };
 
         loop();
 
+        // update number grids
         this.update("u");
     }
 }
@@ -414,7 +452,6 @@ class AnimatePopOut
         font_size = Math.floor(font_size / grid_size * rec_size);
         let new_font = this.font.substr(0, 19) + String(font_size) + this.font.substr(22, 8);
         ctx.font = new_font;
-        console.log(new_font);
         // set baseline
         ctx.textBaseline = "middle";
         // align based on x values in fillText
@@ -504,6 +541,9 @@ document.addEventListener("keypress", function (e)
         NG.generateRandomNumber();
     // detect 'w'
     if (e.keyCode === 119)
+    {
         NG.move_up_once();
+        console.log(NG.numbers);
+    }
 });
 //document.onkeypress = NG.generateRandomNumber;
