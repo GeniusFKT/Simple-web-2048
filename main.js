@@ -62,7 +62,7 @@ class NumberGrids
 {
     constructor()
     {
-        this.numbers = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 0, 0]];
+        this.numbers = [[0, 4, 0, 0], [2, 0, 0, 16], [0, 2, 0, 2], [2, 0, 0, 0]];
         this.num2color = new Map([[2, "rgb(255, 222, 173)"], [4, "rgb(255, 218, 185)"], [8, "rgb(238, 220, 130)"], [16, "rgb(205, 198, 115)"], [32, "rgb(255, 193, 37)"], [64, "rgb(205, 155, 29)"], [128, "rgb(139, 117, 0)"], [256, "rgb(210, 105, 30)"], [512, "rgb(160, 82, 45)"], [1024, "rgb(139, 69, 19)"], [2048, "rgb(165, 42, 42)"]]);
         this.num2font = new Map([[1, "normal normal bold 150px arial"], [2, "normal normal bold 120px arial"], [3, "normal normal bold 90px arial"], [4, "normal normal bold 70px arial"]]);
         this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
@@ -351,16 +351,24 @@ class NumberGrids
         }
     }
 
-    move_up()
+    async move_up()
     {
         // try three times
+        // need async!
+        let dt = 330;
         for (let _ = 0; _ < 3; ++_)
+        {
             this.move_up_once();
+            await Helper.sleep(dt);
+        }
+
     }
 
-    async move_up_once()
+    move_up_once()
     {
+        // get moveable indices
         let indices = this.moveable("u");
+
         // get mask
         let mask = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
         for (let i = 0; i < indices.length; ++i)
@@ -371,6 +379,7 @@ class NumberGrids
                 if (this.numbers[i][j] === 0)
                     mask[i][j] = 0;
 
+        // get animation grids
         let animates = [];
         for (let i = 0; i < indices.length; ++i)
         {
@@ -412,11 +421,8 @@ class NumberGrids
 
         loop();
 
-        console.log("1");
-        await Helper.sleep(500);
         // update number grids
         this.update("u");
-        console.log("2");
     }
 }
 
