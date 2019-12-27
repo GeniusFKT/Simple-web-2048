@@ -62,7 +62,7 @@ class NumberGrids
 {
     constructor()
     {
-        this.numbers = [[0, 4, 0, 0], [2, 0, 0, 16], [0, 2, 0, 2], [2, 0, 0, 0]];
+        this.numbers = [[8, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [8, 0, 0, 0]];
         this.num2color = new Map([[2, "rgb(255, 222, 173)"], [4, "rgb(255, 218, 185)"], [8, "rgb(238, 220, 130)"], [16, "rgb(205, 198, 115)"], [32, "rgb(255, 193, 37)"], [64, "rgb(205, 155, 29)"], [128, "rgb(139, 117, 0)"], [256, "rgb(210, 105, 30)"], [512, "rgb(160, 82, 45)"], [1024, "rgb(139, 69, 19)"], [2048, "rgb(165, 42, 42)"]]);
         this.num2font = new Map([[1, "normal normal bold 150px arial"], [2, "normal normal bold 120px arial"], [3, "normal normal bold 90px arial"], [4, "normal normal bold 70px arial"]]);
         this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
@@ -71,6 +71,7 @@ class NumberGrids
         this.two_ratio = 0.8;
         this.pop_out_velocity = 10;
         this.move_velocity = 10;
+        this.merge_velocity = 2;
     }
 
     // draw current status
@@ -204,6 +205,7 @@ class NumberGrids
     }
 
     // return the index of all grids which is moveable under specific direction
+    // one step
     moveable(direction)
     {
         let indices = [];
@@ -217,7 +219,7 @@ class NumberGrids
                     let flag = false;
                     for (let i = 0; i < 4; ++i)
                     {
-                        if (flag === true && this.numbers[i][j] !== 0)
+                        if (flag && this.numbers[i][j] !== 0)
                             indices.push([i, j]);
                         if (this.numbers[i][j] === 0)
                             flag = true;
@@ -229,9 +231,9 @@ class NumberGrids
                 for (let j = 0; j < 4; ++j)
                 {
                     let flag = false;
-                    for (let i = 3; i >= 0; ++i)
+                    for (let i = 3; i >= 0; --i)
                     {
-                        if (flag === true && this.numbers[i][j] !== 0)
+                        if (flag && this.numbers[i][j] !== 0)
                             indices.push([i, j]);
                         if (this.numbers[i][j] === 0)
                             flag = true;
@@ -245,7 +247,7 @@ class NumberGrids
                     let flag = false;
                     for (let j = 0; j < 4; ++j)
                     {
-                        if (flag === true && this.numbers[i][j] !== 0)
+                        if (flag && this.numbers[i][j] !== 0)
                             indices.push([i, j]);
                         if (this.numbers[i][j] === 0)
                             flag = true;
@@ -257,11 +259,106 @@ class NumberGrids
                 for (let i = 0; i < 4; ++i)
                 {
                     let flag = false;
-                    for (let j = 3; j >= 0; ++j)
+                    for (let j = 3; j >= 0; --j)
                     {
-                        if (flag === true && this.numbers[i][j] !== 0)
+                        if (flag && this.numbers[i][j] !== 0)
                             indices.push([i, j]);
                         if (this.numbers[i][j] === 0)
+                            flag = true;
+                    }
+                }
+                break;
+            default:
+                throw "Invalid direction!";
+        }
+
+        return indices;
+    }
+
+    // return the index of all grids which is mergeable under specific direction
+    // one step
+    mergeable(direction)
+    {
+        let indices = [];
+
+        switch (direction) 
+        {
+            // up
+            case "u":
+                for (let j = 0; j < 4; ++j)
+                {
+                    let flag = true;
+                    let flag_moveable = false;
+                    for (let i = 0; i < 3; ++i)
+                    {
+                        if (this.numbers[i][j] === 0)
+                            flag_moveable = true;
+                        if (this.numbers[i][j] !== 0 && !flag_moveable && flag && this.numbers[i][j] === this.numbers[i + 1][j])
+                        {
+                            indices.push([i, j]);
+                            flag = false;
+                        }
+                        else
+                            flag = true;
+                    }
+                }
+                break;
+            // down
+            case "d":
+                for (let j = 0; j < 4; ++j)
+                {
+                    let flag = true;
+                    let flag_moveable = false;
+                    for (let i = 3; i > 0; --i)
+                    {
+                        if (this.numbers[i][j] === 0)
+                            flag_moveable = true;
+                        if (this.numbers[i][j] !== 0 && !flag_moveable && flag && this.numbers[i][j] === this.numbers[i - 1][j])
+                        {
+                            indices.push([i, j]);
+                            flag = false;
+                        }
+                        else
+                            flag = true;
+                    }
+                }
+                break;
+            // left
+            case "l":
+                for (let i = 0; i < 4; ++i)
+                {
+                    let flag = true;
+                    let flag_moveable = false;
+                    for (let j = 0; j < 3; ++j)
+                    {
+                        if (this.numbers[i][j] === 0)
+                            flag_moveable = true;
+                        if (this.numbers[i][j] !== 0 && !flag_moveable && flag && this.numbers[i][j] === this.numbers[i][j + 1])
+                        {
+                            indices.push([i, j]);
+                            flag = false;
+                        }
+                        else
+                            flag = true;
+                    }
+                }
+                break;
+            // right
+            case "r":
+                for (let i = 0; i < 4; ++i)
+                {
+                    let flag = true;
+                    let flag_moveable = false;
+                    for (let j = 3; j > 0; --j)
+                    {
+                        if (this.numbers[i][j] === 0)
+                            flag_moveable = true;
+                        if (this.numbers[i][j] !== 0 && !flag_moveable && flag && this.numbers[i][j] === this.numbers[i][j + 1])
+                        {
+                            indices.push([i, j]);
+                            flag = false;
+                        }
+                        else
                             flag = true;
                     }
                 }
@@ -300,7 +397,7 @@ class NumberGrids
                 for (let j = 0; j < 4; ++j)
                 {
                     let flag = false;
-                    for (let i = 3; i >= 0; ++i)
+                    for (let i = 3; i >= 0; --i)
                     {
                         if (flag === true && this.numbers[i][j] !== 0)
                         {
@@ -334,7 +431,7 @@ class NumberGrids
                 for (let i = 0; i < 4; ++i)
                 {
                     let flag = false;
-                    for (let j = 3; j >= 0; ++j)
+                    for (let j = 3; j >= 0; --j)
                     {
                         if (flag === true && this.numbers[i][j] !== 0)
                         {
@@ -355,24 +452,38 @@ class NumberGrids
     {
         // try three times
         // need async!
-        let dt = 330;
+        // let dt = 330;
+        let dt = 500;
         for (let _ = 0; _ < 3; ++_)
         {
             this.move_up_once();
             await Helper.sleep(dt);
+            this.draw();
         }
 
     }
 
     move_up_once()
     {
-        // get moveable indices
-        let indices = this.moveable("u");
+        console.log(1);
+        console.log(this.numbers);
+        // get mergeable indices
+        let indices_mergeable = this.mergeable("u");
+
+        // update mergeable numbers
+        for (let i = 0; i < indices_mergeable.length; ++i)
+        {
+            this.numbers[indices_mergeable[i][0]][indices_mergeable[i][1]] *= 2;
+            this.numbers[indices_mergeable[i][0] + 1][indices_mergeable[i][1]] = 0;
+        }
+
+        // get moveable indices after merging
+        let indices_moveable = this.moveable("u");
 
         // get mask
         let mask = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]];
-        for (let i = 0; i < indices.length; ++i)
-            mask[indices[i][0]][indices[i][1]] = 0;
+        for (let i = 0; i < indices_moveable.length; ++i)
+            mask[indices_moveable[i][0]][indices_moveable[i][1]] = 0;
 
         for (let i = 0; i < 4; ++i)
             for (let j = 0; j < 4; ++j)
@@ -380,23 +491,38 @@ class NumberGrids
                     mask[i][j] = 0;
 
         // get animation grids
-        let animates = [];
-        for (let i = 0; i < indices.length; ++i)
+        let animates_move = [];
+        for (let i = 0; i < indices_moveable.length; ++i)
         {
-            let number = this.numbers[indices[i][0]][indices[i][1]];
+            let number = this.numbers[indices_moveable[i][0]][indices_moveable[i][1]];
             let digit = Math.ceil(Math.log10(number));
             let color = this.num2color.get(number);
             if (color === undefined)
                 color = this.num2color.get(2048);
             let font = this.num2font.get(digit);
             let text_y_offset = this.num2y_offset.get(digit);
-            let animate = new AnimateMove(indices[i], "u", this.move_velocity, number, font, color, text_y_offset);
+            let animate_move = new AnimateMove(indices_moveable[i], "u", this.move_velocity, number, font, color, text_y_offset);
 
-            animates.push(animate);
+            animates_move.push(animate_move);
+        }
+
+        let animates_merge = [];
+        for (let i = 0; i < indices_mergeable.length; ++i)
+        {
+            let number = this.numbers[indices_mergeable[i][0]][indices_mergeable[i][1]];
+            let digit = Math.ceil(Math.log10(number));
+            let color = this.num2color.get(number);
+            if (color === undefined)
+                color = this.num2color.get(2048);
+            let font = this.num2font.get(digit);
+            let text_y_offset = this.num2y_offset.get(digit);
+            let animate_merge = new AnimateMerge(indices_mergeable[i], "u", this.merge_velocity, number, font, color, text_y_offset);
+
+            animates_merge.push(animate_merge);            
         }
 
         // nothing to update
-        if (animates.length === 0)
+        if (animates_move.length === 0 && animates_merge.length === 0)
             return;
         
         // animation loop
@@ -405,24 +531,43 @@ class NumberGrids
         let loop = function()
         {
             Helper.draw_background();
-            Helper.draw_with_mask(mask);
+            //Helper.draw_with_mask(mask);
 
-            for (let i = 0; i < animates.length; ++i)
+            for (let i = 0; i < animates_move.length; ++i)
             {
-                animates[i].draw();
-                animates[i].update();
+                animates_move[i].draw();
+                animates_move[i].update();
             }
 
-            if (animates[0].y_offset >= indices[0][0] * (gap + grid_size) - grid_size)
-                timer = window.requestAnimationFrame(loop);
-            else
-                window.cancelAnimationFrame(timer);
+            for (let i = 0; i < animates_merge.length; ++i)
+            {
+                animates_merge[i].draw();
+                animates_merge[i].update();
+            }
+
+            // in case of nothing to move while some grids need merged
+            try 
+            {
+                if (animates_move[0].y_offset >= indices_moveable[0][0] * (gap + grid_size) - grid_size)
+                    timer = window.requestAnimationFrame(loop);
+                else
+                    window.cancelAnimationFrame(timer);
+            } 
+            catch (TypeError)
+            {
+                if (animates_merge[0].x_offset === animates_merge[0].x_offset_const && !animates_merge[0].flag)
+                    window.cancelAnimationFrame(timer);
+                else
+                    timer = window.requestAnimationFrame(loop);
+            }
         };
 
         loop();
 
         // update number grids
         this.update("u");
+        console.log(2);
+        console.log(this.numbers);
     }
 }
 
@@ -566,19 +711,95 @@ class AnimateMove
     }
 }
 
+class AnimateMerge
+{
+    constructor(index, direction, velocity, number, font, color, text_y_offset)
+    {
+        this.index = index;
+        this.direction = direction;
+        this.velocity = velocity;
+        this.number = number;
+        this.font = font;
+        this.color = color;
+        this.text_y_offset = text_y_offset;
+        // origin grid offset (top left, absolute)
+        this.x_offset = this.x_offset_const = width / 2 - height / 2 + index[1] * (gap + grid_size) + gap;
+        this.y_offset = this.y_offset_const = index[0] * (gap + grid_size) + gap;
+        this.flag = true;
+    }
+
+    draw()
+    {
+        // draw rectangle
+        let rec_size = grid_size + 2 * (this.x_offset_const - this.x_offset);
+        let rec = new FilletRectangle(this.x_offset, this.y_offset, rec_size, rec_size, 5, this.color);
+        rec.draw();
+
+        // draw text
+        ctx.fillStyle = "rgb(255, 255, 255)";
+        ctx.font = this.font;
+
+        // set baseline
+        ctx.textBaseline = "middle";
+        // align based on x values in fillText
+        ctx.textAlign = "center";
+        ctx.fillText(String(this.number), this.x_offset_const + grid_size / 2, this.y_offset_const + grid_size / 2 + this.text_y_offset);
+    }
+
+    update()
+    {
+        if (this.flag)
+        {
+            this.x_offset -= this.velocity;
+            this.y_offset -= this.velocity;
+            if (this.y_offset_const - this.y_offset > gap)
+            {
+                this.x_offset = this.x_offset_const - gap;
+                this.y_offset = this.y_offset_const - gap;
+                this.flag = false;
+            }
+        }
+        else
+        {
+            this.x_offset += this.velocity;
+            this.y_offset += this.velocity;
+            if (this.y_offset > this.y_offset_const)
+            {
+                this.x_offset = this.x_offset_const;
+                this.y_offset = this.y_offset_const;
+            }
+        }
+    }
+}
+
+class Game
+{
+    constructor()
+    {
+        this.NG
+    }
+}
+
 
 let NG = new NumberGrids();
 NG.draw();
 
 document.addEventListener("keypress", function (e) 
 {
-    // detect 'g'
-    if (e.keyCode === 103)
+    console.log(e);
+    // detect 'g' or 'G'
+    if (e.keyCode === 103 || e.keyCode === 71)
         NG.generateRandomNumber();
-    // detect 'w'
-    if (e.keyCode === 119)
+    // detect 'w' or 'W'
+    if (e.keyCode === 119 || e.keyCode === 87)
     {
         NG.move_up();
     }
+    // detect 't' for test
+    if (e.keyCode === 116)
+    {}
 });
-//document.onkeypress = NG.generateRandomNumber;
+
+
+
+
