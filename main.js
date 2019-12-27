@@ -2,8 +2,6 @@
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
-
-
 const width = canvas.width = window.innerWidth - 20;
 const height = canvas.height = window.innerHeight - 20;
 
@@ -64,7 +62,7 @@ class NumberGrids
 {
     constructor()
     {
-        this.numbers = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+        this.numbers = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 0, 0]];
         this.num2color = new Map([[2, "rgb(255, 222, 173)"], [4, "rgb(255, 218, 185)"], [8, "rgb(238, 220, 130)"], [16, "rgb(205, 198, 115)"], [32, "rgb(255, 193, 37)"], [64, "rgb(205, 155, 29)"], [128, "rgb(139, 117, 0)"], [256, "rgb(210, 105, 30)"], [512, "rgb(160, 82, 45)"], [1024, "rgb(139, 69, 19)"], [2048, "rgb(165, 42, 42)"]]);
         this.num2font = new Map([[1, "normal normal bold 150px arial"], [2, "normal normal bold 120px arial"], [3, "normal normal bold 90px arial"], [4, "normal normal bold 70px arial"]]);
         this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
@@ -102,7 +100,10 @@ class NumberGrids
         for (let i = 0; i < 4; i++)
             for (let j = 0; j < 4; j++)
                 if (mask[i][j] === 0 || this.numbers[i][j] === 0)
-                    continue;
+                {
+                    let grid = new FilletRectangle(width / 2 - height / 2 + j * (gap + grid_size) + gap, i * (gap + grid_size) + gap, grid_size, grid_size, 5, 'rgb(50, 50, 50)');
+                    grid.draw();
+                }
                 else
                 {
                     // draw grids' color
@@ -357,7 +358,7 @@ class NumberGrids
             this.move_up_once();
     }
 
-    move_up_once()
+    async move_up_once()
     {
         let indices = this.moveable("u");
         // get mask
@@ -388,17 +389,19 @@ class NumberGrids
         // nothing to update
         if (animates.length === 0)
             return;
-
-        this.draw_with_mask(mask);
         
+        // animation loop
         let timer;
 
         let loop = function()
         {
+            Helper.draw_background();
+            Helper.draw_with_mask(mask);
+
             for (let i = 0; i < animates.length; ++i)
             {
-                animates[i].update();
                 animates[i].draw();
+                animates[i].update();
             }
 
             if (animates[0].y_offset >= indices[0][0] * (gap + grid_size) - grid_size)
@@ -409,8 +412,11 @@ class NumberGrids
 
         loop();
 
+        console.log("1");
+        await Helper.sleep(500);
         // update number grids
         this.update("u");
+        console.log("2");
     }
 }
 
@@ -419,6 +425,21 @@ class Helper
     static random_minmax(min, max)
     {
         return Math.random() * (max - min) + min;
+    }
+
+    static draw_background()
+    {
+        background.draw();
+    }
+
+    static draw_with_mask(mask)
+    {
+        NG.draw_with_mask(mask);
+    }
+
+    // stupid sleep x
+    static sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
@@ -484,8 +505,8 @@ class AnimateMove
         this.color = color;
         this.text_y_offset = text_y_offset;
         // origin grid offset (top left, absolute)
-        this.x_offset = width / 2 - height / 2 + index[1] * (gap + grid_size) + gap;
-        this.y_offset = index[0] * (gap + grid_size) + gap;
+        this.x_offset = this.x_offset_const = width / 2 - height / 2 + index[1] * (gap + grid_size) + gap;
+        this.y_offset = this.y_offset_const = index[0] * (gap + grid_size) + gap;
     }
 
     draw()
@@ -511,18 +532,26 @@ class AnimateMove
         {
             case "u":
                 this.y_offset -= this.velocity;
+                if (this.y_offset < this.y_offset_const - grid_size - gap)
+                    this.y_offset = this.y_offset_const - grid_size - gap;
                 break;
 
             case "d":
                 this.y_offset += this.velocity;
+                if (this.y_offset > this.y_offset_const + grid_size + gap)
+                    this.y_offset = this.y_offset_const + grid_size + gap;
                 break;
 
             case "l":
                 this.x_offset -= this.velocity;
+                if (this.x_offset < this.x_offset_const - grid_size - gap)
+                    this.x_offset = this.x_offset_const - grid_size - gap;
                 break;
 
             case "r":
                 this.x_offset += this.velocity;
+                if (this.x_offset > this.x_offset_const + grid_size + gap)
+                    this.x_offset = this.x_offset_const + grid_size + gap;
                 break;
 
             default:
@@ -533,6 +562,7 @@ class AnimateMove
 
 
 let NG = new NumberGrids();
+NG.draw();
 
 document.addEventListener("keypress", function (e) 
 {
@@ -542,8 +572,7 @@ document.addEventListener("keypress", function (e)
     // detect 'w'
     if (e.keyCode === 119)
     {
-        NG.move_up_once();
-        console.log(NG.numbers);
+        NG.move_up();
     }
 });
 //document.onkeypress = NG.generateRandomNumber;
