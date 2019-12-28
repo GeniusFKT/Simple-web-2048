@@ -62,7 +62,7 @@ class NumberGrids
 {
     constructor()
     {
-        this.numbers = [[8, 0, 8, 8], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+        this.numbers = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
         this.num2color = new Map([[2, "rgb(255, 222, 173)"], [4, "rgb(255, 218, 185)"], [8, "rgb(238, 220, 130)"], [16, "rgb(205, 198, 115)"], [32, "rgb(255, 193, 37)"], [64, "rgb(205, 155, 29)"], [128, "rgb(139, 117, 0)"], [256, "rgb(210, 105, 30)"], [512, "rgb(160, 82, 45)"], [1024, "rgb(139, 69, 19)"], [2048, "rgb(165, 42, 42)"]]);
         this.num2font = new Map([[1, "normal normal bold 150px arial"], [2, "normal normal bold 120px arial"], [3, "normal normal bold 90px arial"], [4, "normal normal bold 70px arial"]]);
         this.num2y_offset = new Map([[1, 10], [2, 8], [3, 6], [4, 0]]);
@@ -1229,35 +1229,56 @@ class AnimateMerge
 
 
 let NG = new NumberGrids();
-let flag = true;
-while (!NG.isGameOver())
-{
-    flag = true;
-    NG.generateRandomNumber();
-    // while (flag);
-}
+NG.generateRandomNumber();
 
-document.addEventListener("keypress", function (e) 
+document.addEventListener("keypress", function(e) 
 {
     // detect 'g' or 'G'
     if (e.keyCode === 103 || e.keyCode === 71)
         NG.generateRandomNumber();
     // detect 'w' or 'W'
     if (e.keyCode === 119 || e.keyCode === 87)
+    {
         NG.move_up();
+        if (NG.isGameOver())
+            game_over();
+        else
+            NG.generateRandomNumber();
+    }
     // detect 's' or 'S'
     if (e.keyCode === 115 || e.keyCode === 83)
+    {
         NG.move_down();
+        if (NG.isGameOver())
+            game_over();
+        else
+            NG.generateRandomNumber();
+    }
     // detect 'a' or 'A'
     if (e.keyCode === 97 || e.keyCode === 65)
+    {
         NG.move_left();
+        if (NG.isGameOver())
+            game_over();
+        else
+            NG.generateRandomNumber();
+    }
     // detect 'd' or 'D'
     if (e.keyCode === 100 || e.keyCode === 68)
+    {
         NG.move_right();
-
-    flag = false;
+        if (NG.isGameOver())
+            game_over();
+        else
+            NG.generateRandomNumber();
+    }
 });
 
+
+function game_over()
+{
+    
+}
 
 
 
